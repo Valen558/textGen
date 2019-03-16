@@ -32,7 +32,7 @@ import os
 # This address identifies the TPU we'll use when configuring TensorFlow.
 TPU_WORKER = 'grpc://' + os.environ['COLAB_TPU_ADDR']
 
-THE_TEXT = '/content/horror.txt'
+THE_TEXT = '/content/more.txt'
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -164,12 +164,3 @@ for i in range(BATCH_SIZE):
   print()
   assert len(generated) == PREDICT_LEN, 'Generated text too short'
 
-
-
-"""## What's next
-
-* Learn about [Cloud TPUs](https://cloud.google.com/tpu/docs) that Google designed and optimized specifically to speed up and scale up ML workloads for training and inference and to enable ML engineers and researchers to iterate more quickly.
-* Explore the range of [Cloud TPU tutorials and Colabs](https://cloud.google.com/tpu/docs/tutorials) to find other examples that can be used when implementing your ML project.
-
-On Google Cloud Platform, in addition to GPUs and TPUs available on pre-configured [deep learning VMs](https://cloud.google.com/deep-learning-vm/),  you will find [AutoML](https://cloud.google.com/automl/)*(beta)* for training custom models without writing code and [Cloud ML Engine](https://cloud.google.com/ml-engine/docs/) which will allows you to run parallel trainings and hyperparameter tuning of your custom models on powerful distributed hardware.
-"""
