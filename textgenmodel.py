@@ -13,10 +13,7 @@ Original file is located at
 Download textfiles from AIGramp. You use snippets from this file as the *training data* for the model. The *target* snippet is offset by one character.
 """
 
-!wget --show-progress  -O /content/merged.txt http://aigramp.com/texts/merged.txt
-!wget --show-progress  -O /content/more.txt http://aigramp.com/texts/more/merged.txt
-!wget --show-progress  -O /content/horror.txt http://aigramp.com/texts/horror/merged.txt
-!wget --show-progress  -O /content/agathaCristie.txt http://aigramp.com/texts/agathaCristie/merged.txt
+!wget --show-progress  -O /content/merged_HorrorOld_King_MiscOld_Sheldon.txt http://aigramp.com/texts/merged_HorrorOld_King_MiscOld_Sheldon.txt
 
 """imports"""
 
@@ -32,7 +29,7 @@ import os
 # This address identifies the TPU we'll use when configuring TensorFlow.
 TPU_WORKER = 'grpc://' + os.environ['COLAB_TPU_ADDR']
 
-THE_TEXT = '/content/more.txt'
+THE_TEXT = '/content/merged_HorrorOld_King_MiscOld_Sheldon.txt'
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -49,9 +46,14 @@ def transform(txt, pad_to=None):
 
 def training_generator(seq_len=100, batch_size=1024):
   """A generator yields (source, target) arrays for training."""
-  with tf.gfile.GFile(THE_TEXT, 'r') as f:
-    txt = f.read()
+  #with tf.gfile.GFile(THE_TEXT, 'r') as f:
+  #  txt = f.read()
 
+  
+  with open(THE_TEXT,'rb') as f:
+    txt=f.read().decode('utf8',errors='ignore')
+
+    
   tf.logging.info('Input text [%d] %s', len(txt), txt[:50])
   source = transform(txt)
   while True:
@@ -112,7 +114,7 @@ tpu_model = tf.contrib.tpu.keras_to_tpu_model(
 tpu_model.fit_generator(
     training_generator(seq_len=100, batch_size=1024),
     steps_per_epoch=100,
-    epochs=15,
+    epochs=10,
 )
 tpu_model.save_weights('/tmp/bard.h5', overwrite=True)
 
