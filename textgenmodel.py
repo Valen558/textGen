@@ -13,7 +13,7 @@ Original file is located at
 Download textfiles from AIGramp. You use snippets from this file as the *training data* for the model. The *target* snippet is offset by one character.
 """
 
-!wget --show-progress  -O /content/merged_HorrorOld_King_MiscOld_Sheldon.txt http://aigramp.com/texts/merged_HorrorOld_King_MiscOld_Sheldon.txt
+!wget --show-progress  -O /content/merged_492books.txt http://aigramp.com/texts/merged_492books.txt
 
 """imports"""
 
@@ -29,7 +29,7 @@ import os
 # This address identifies the TPU we'll use when configuring TensorFlow.
 TPU_WORKER = 'grpc://' + os.environ['COLAB_TPU_ADDR']
 
-THE_TEXT = '/content/merged_HorrorOld_King_MiscOld_Sheldon.txt'
+THE_TEXT = '/content/merged_492books.txt'
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -89,7 +89,14 @@ def lstm_model(seq_len=100, batch_size=None, stateful=True):
   embedding = tf.keras.layers.Embedding(input_dim=256, output_dim=EMBEDDING_DIM)(source)
   lstm_1 = tf.keras.layers.LSTM(EMBEDDING_DIM, stateful=stateful, return_sequences=True)(embedding)
   lstm_2 = tf.keras.layers.LSTM(EMBEDDING_DIM, stateful=stateful, return_sequences=True)(lstm_1)
-  predicted_char = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(256, activation='softmax'))(lstm_2)
+  lstm_3 = tf.keras.layers.LSTM(EMBEDDING_DIM, stateful=stateful, return_sequences=True)(lstm_2)
+  lstm_4 = tf.keras.layers.LSTM(EMBEDDING_DIM, stateful=stateful, return_sequences=True)(lstm_3)
+  lstm_5 = tf.keras.layers.LSTM(EMBEDDING_DIM, stateful=stateful, return_sequences=True)(lstm_4)
+  lstm_6 = tf.keras.layers.LSTM(EMBEDDING_DIM, stateful=stateful, return_sequences=True)(lstm_5)
+  lstm_7 = tf.keras.layers.LSTM(EMBEDDING_DIM, stateful=stateful, return_sequences=True)(lstm_6)
+  lstm_8 = tf.keras.layers.LSTM(EMBEDDING_DIM, stateful=stateful, return_sequences=True)(lstm_7)
+  
+  predicted_char = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(256, activation='softmax'))(lstm_4)
   model = tf.keras.Model(inputs=[source], outputs=[predicted_char])
   model.compile(
       optimizer=tf.train.RMSPropOptimizer(learning_rate=0.01),
@@ -111,21 +118,35 @@ tpu_model = tf.contrib.tpu.keras_to_tpu_model(
     strategy=tf.contrib.tpu.TPUDistributionStrategy(
         tf.contrib.cluster_resolver.TPUClusterResolver(TPU_WORKER)))
 
+
+#continue training the previously saved model
+if (os.path.exists('/tmp/bard.h5')):
+  print ("loading network weights from file")
+  tpu_model.load_weights('/tmp/bard.h5')
+else:
+  print ("no network weights file is found")
+
+
 tpu_model.fit_generator(
     training_generator(seq_len=100, batch_size=1024),
     steps_per_epoch=100,
-    epochs=10,
+    epochs=20,
 )
+print ("saving network weights file")
 tpu_model.save_weights('/tmp/bard.h5', overwrite=True)
+
+#using this block when have interrupted the training of the network
+#print ("saving network weights file Interruption happened")
+#tpu_model.save_weights('/tmp/bard.h5', overwrite=True)
 
 """### Make predictions with the model
 
-Use the trained model to make predictions and generate your own Shakespeare-esque play.
-Start the model off with a *seed* sentence, then generate 250 characters from it. The model makes five predictions from the initial seed.
+Use the trained model to make predictions and generate your texts.
+Start the model off with a *seed* sentence, then generate 250 characters from it. The model makes predictions from the initial seed.
 """
 
-BATCH_SIZE = 50
-PREDICT_LEN = 2000
+BATCH_SIZE = 10
+PREDICT_LEN = 300
 
 # Keras requires the batch size be specified ahead of time for stateful models.
 # We use a sequence length of 1, as we will be feeding in one character at a 
